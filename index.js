@@ -1,24 +1,17 @@
-// Import dependencies
 const express = require('express');
 const cors = require('cors');
-const { OpenAIApi, Configuration } = require('openai');
+const OpenAI = require('openai'); // v4 uses default export
 require('dotenv').config();
 
-// Initialize Express
 const app = express();
-
-// Middleware setup
 app.use(cors());
 app.use(express.json());
 
-// OpenAI Configuration (Ensure you have the OPENAI_API_KEY in your environment variables)
-const openai = new OpenAIApi(
-  new Configuration({
-    apiKey: process.env.OPENAI_API_KEY,
-  })
-);
+// Create OpenAI client (v4+ syntax)
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
-// API endpoint to process triage information
 app.post('/api/triage', async (req, res) => {
   const { symptom, duration, severity, extras } = req.body;
 
@@ -41,27 +34,23 @@ app.post('/api/triage', async (req, res) => {
   `;
 
   try {
-    // Send request to OpenAI API
-    const chat = await openai.createChatCompletion({
-      model: 'gpt-3.5-turbo', // You can also use gpt-4 or another available model
+    const response = await openai.chat.completions.create({
+      model: 'gpt-3.5-turbo',
       messages: [{ role: 'user', content: prompt }],
     });
 
-    const reply = chat.data.choices[0].message.content;
-    res.json(JSON.parse(reply)); // Send the parsed response to the client
+    res.json(JSON.parse(response.choices[0].message.content));
   } catch (err) {
-    console.error('OpenAI API Error:', err.response ? err.response.data : err.message);
-    res.status(500).json({ error: 'Failed to process AI response', details: err.response ? err.response.data : err.message });
+    console.error('OpenAI API Error:', err);
+    res.status(500).json({ error: 'Failed to process AI response' });
   }
 });
 
-// Default route for checking if the server is running
 app.get('/', (req, res) => {
   res.send('AI Triage API is running.');
 });
 
-// Define the port from environment variable (required by Render)
-const PORT = process.env.PORT || 3000;  // Render automatically provides PORT, or use 3000 for local dev
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

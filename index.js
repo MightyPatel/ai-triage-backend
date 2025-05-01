@@ -1,45 +1,81 @@
 const express = require('express');
 const cors = require('cors');
-const OpenAI = require('openai'); // v4 default export
-const nearbyClinics = require('./getNearbyClinics');
-app.use(nearbyClinics);
+const OpenAI = require('openai');
+const nearbyClinics = require('./getNearbyClinics'); // must come after app is defined
 require('dotenv').config();
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use(nearbyClinics); // this is now valid
 
-// OpenAI v4 client
+// Initialize OpenAI
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-// POST /api/triage endpoint
+// AI Triage Route
 app.post('/api/triage', async (req, res) => {
-  const { symptom, duration, severity, extras } = req.body;
+  const {
+    name,
+    age,
+    gender,
+    conditions,
+    medications,
+    location,
+    symptom,
+    duration,
+    severity,
+    extras
+  } = req.body;
 
   const prompt = `
-You are a virtual health assistant. A user reports:
-- Symptom: ${symptom}
+You are a virtual medical triage assistant.
+
+A patient has submitted the following information:
+- Name: ${name}
+- Age: ${age}
+- Gender: ${gender}
+- Existing Conditions: ${conditions}
+- Current Medications: ${medications}
+- Location: ${location}
+- Main Symptom: ${symptom}
 - Duration: ${duration}
 - Severity: ${severity}
-- Additional symptoms: ${extras}
+- Additional Symptoms: ${extras}
 
-Suggest:
-1. Urgency (Emergency, Soon, Routine)
-2. Doctor type (e.g., General Practitioner)
+Please:
+1. Determine the urgency (Emergency, Soon, Routine)
+2. Recommend the doctor type (e.g., General Practitioner)
+3. If applicable, recommend a specialist (e.g., Cardiologist, Dermatologist)
+4. Suggest 2 nearby clinics or hospitals based on the location. Include clinic name, distance, type, and doctor name.
 
 Respond ONLY in valid JSON like:
 {
   "urgency": "Soon",
-  "doctor_type": "General Practitioner"
+  "doctor_type": "Specialist",
+  "specialist": "Dermatologist",
+  "nearby": [
+    {
+      "name": "Downtown Skin Centre",
+      "type": "Clinic",
+      "distance": "2.1 km",
+      "doctor": "Dr. Aisha Kaur"
+    },
+    {
+      "name": "City Health Hospital",
+      "type": "Hospital",
+      "distance": "4.7 km",
+      "doctor": "Dr. John Roberts"
+    }
+  ]
 }
 `;
 
   try {
     const chat = await openai.chat.completions.create({
       model: 'gpt-3.5-turbo',
-      messages: [{ role: 'user', content: prompt }],
+      messages: [{ role: 'user', content: prompt }]
     });
 
     const reply = chat.choices[0].message.content;
@@ -49,26 +85,22 @@ Respond ONLY in valid JSON like:
       res.json(parsed);
     } catch (parseErr) {
       console.error('❌ Failed to parse OpenAI response:', reply);
-      res.status(500).json({
-        error: 'AI response is not valid JSON',
-        raw: reply,
-      });
+      res.status(500).json({ error: 'AI response is not valid JSON', raw: reply });
     }
   } catch (err) {
     console.error('❌ OpenAI API Error:', err);
     res.status(500).json({
       error: 'Failed to process AI response',
-      details: err.message,
+      details: err.message
     });
   }
 });
 
-// Root check route
+// Root route
 app.get('/', (req, res) => {
-  res.send('AI Triage API is running.');
+  res.send('✅ AI Triage Backend is Running');
 });
 
-// Start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);

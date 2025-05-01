@@ -11,7 +11,7 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 app.post("/api/triage", async (req, res) => {
   const { symptom, duration, severity, extras } = req.body;
-
+console.log('Request received:', req.body);
   const prompt = `
 You are a virtual health assistant. A user reports:
 - Symptom: ${symptom}

@@ -7,9 +7,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const openai = new OpenAIApi(new Configuration)({
+const configuration = new Configuration({
   apiKey: process.env.OPENAI_API_KEY,
 });
+const openai = new OpenAIApi(configuration);
 
 app.post('/api/triage', async (req, res) => {
   const { symptom, duration, severity, extras } = req.body;

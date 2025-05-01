@@ -28,7 +28,7 @@ app.get('/api/clinics', async (req, res) => {
     // Then search for clinics and hospitals nearby
     const placesRes = await axios.get('https://maps.googleapis.com/maps/api/place/nearbysearch/json', {
       params: {
-        location: \`\${lat},\${lng}\`,
+       location: `${lat},${lng}`,
         radius: 5000, // 5km radius
         type: 'hospital',
         keyword: 'clinic',

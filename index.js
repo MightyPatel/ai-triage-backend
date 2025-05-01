@@ -33,18 +33,16 @@ app.post('/api/triage', async (req, res) => {
     }
   `;
 
-  try {
-    const response = await openai.chat.completions.create({
-      model: 'gpt-3.5-turbo',
-      messages: [{ role: 'user', content: prompt }],
-    });
+ const reply = chat.data.choices[0].message.content;
 
-    res.json(JSON.parse(response.choices[0].message.content));
-  } catch (err) {
-    console.error('OpenAI API Error:', err);
-    res.status(500).json({ error: 'Failed to process AI response' });
-  }
-});
+try {
+  const parsed = JSON.parse(reply);
+  res.json(parsed);
+} catch (parseErr) {
+  console.error('Failed to parse OpenAI response:', reply);
+  res.status(500).json({ error: 'AI response is not valid JSON', raw: reply });
+}
+
 
 app.get('/', (req, res) => {
   res.send('AI Triage API is running.');

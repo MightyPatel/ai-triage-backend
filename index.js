@@ -9,41 +9,37 @@ app.use(express.json());
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-app.post("/api/triage", async (req, res) => {
+app.post('/api/triage', async (req, res) => {
   const { symptom, duration, severity, extras } = req.body;
-console.log('Request received:', req.body);
+
   const prompt = `
-You are a virtual health assistant. A user reports:
-- Symptom: ${symptom}
-- Duration: ${duration}
-- Severity: ${severity}
-- Additional symptoms: ${extras}
+    You are a virtual health assistant. A user reports:
+    - Symptom: ${symptom}
+    - Duration: ${duration}
+    - Severity: ${severity}
+    - Additional symptoms: ${extras}
 
-Suggest:
-1. Urgency (Emergency, Soon, Routine)
-2. Doctor type (e.g., General Practitioner)
+    Suggest:
+    1. Urgency (Emergency, Soon, Routine)
+    2. Doctor type (e.g., General Practitioner)
 
-Respond in JSON:
-{
-  "urgency": "Soon",
-  "doctor_type": "General Practitioner"
-}
-`;
+    Respond in JSON:
+    {
+      "urgency": "Soon",
+      "doctor_type": "General Practitioner"
+    }
+  `;
 
   try {
-    const response = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
-      messages: [{ role: "user", content: prompt }],
+    const chat = await openai.createChatCompletion({
+      model: 'gpt-3.5-turbo',
+      messages: [{ role: 'user', content: prompt }],
     });
 
-    res.json(JSON.parse(response.choices[0].message.content));
+    const reply = chat.data.choices[0].message.content;
+    res.json(JSON.parse(reply));
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to process AI response" });
+    console.error('OpenAI API Error:', err.response ? err.response.data : err.message);
+    res.status(500).json({ error: 'Failed to process AI response', details: err.response ? err.response.data : err.message });
   }
 });
-
-app.listen(3000, () => {
-  console.log("Server running on port 3000");
-});
-

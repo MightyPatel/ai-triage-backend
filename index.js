@@ -1,6 +1,8 @@
 const express = require('express');
 const cors = require('cors');
 const OpenAI = require('openai'); // v4 default export
+const nearbyClinics = require('./getNearbyClinics');
+app.use(nearbyClinics);
 require('dotenv').config();
 
 const app = express();

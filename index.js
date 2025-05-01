@@ -1,7 +1,7 @@
 // Import dependencies
 const express = require('express');
 const cors = require('cors');
-const { Configuration, OpenAIApi } = require('openai');
+const { OpenAIApi, Configuration } = require('openai');
 require('dotenv').config();
 
 // Initialize Express
@@ -12,10 +12,11 @@ app.use(cors());
 app.use(express.json());
 
 // OpenAI Configuration (Ensure you have the OPENAI_API_KEY in your environment variables)
-const configuration = new Configuration({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-const openai = new OpenAIApi(configuration);
+const openai = new OpenAIApi(
+  new Configuration({
+    apiKey: process.env.OPENAI_API_KEY,
+  })
+);
 
 // API endpoint to process triage information
 app.post('/api/triage', async (req, res) => {
